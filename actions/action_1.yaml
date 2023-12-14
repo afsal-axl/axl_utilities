@@ -1,0 +1,7 @@
+---
+name: action_1
+pack: axl_utilities
+runner_type: "local-shell-script"
+description: show date
+enabled: true
+entry_point: action_1.py

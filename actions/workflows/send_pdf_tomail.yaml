@@ -1,0 +1,51 @@
+version: 1.0
+tasks:
+  # [203, 11]
+  start:
+    action: core.noop
+    next:
+      - do:
+          - date_day
+        when: <% succeeded() %>
+  # [202, 117]
+  date_day:
+    action: axl_utilities.action_1
+    next:
+      - do:
+          - generate_pdf
+        when: <% succeeded() %>
+        publish:
+          - d_d: <% result().stdout %>
+  # [196, 474]
+  end:
+    action: core.noop
+  # [209, 242]
+  generate_pdf:
+    action: core.http
+    input:
+      url: "https://rest.apitemplate.io/v2/create-pdf?template_id=55477b230964fa6a"
+      body: "{\n  \"status\": \"success\",\n  \"download_url\": \"https://bucket.s3.amazonaws.com/91f62769-69e4-48bf.pdf\",\n  \"template_id\": \"cd890b2b199c5c42\",\n  \"dynamic_content_1\": \"<% ctx().d_d.Date %>\",\n  \"dynamic_content_2\": \"<% ctx().d_d.Day %>\",\n  \"total_pages\": 4,\n  \"transaction_ref\": \"a0430897-2c94-40e1-a09b-57403d811ceb\",\n  \"post_actions\": [\n    {\n      \"action\": \"S3\",\n      \"name\": \"S3 Storage\",\n      \"bucket\": \"alphacloud-test-bucket\",\n      \"status\": \"success\",\n      \"file\": \"s3://alphacloud-test-bucket/ab2e1bf7-cefa-42c7-929f-38d92b8bf8bf.pdf\"\n    }\n  ]\n}"
+      headers:
+        X-API-KEY: dff8MTY1MDI6MTM1ODg6T2Y0NXJKTjZqcElJbnplQw=
+      method: POST
+    next:
+      - do:
+          - send_Mail
+        when: <% succeeded %>
+        publish:
+          - pdf_link: <% result().body.download_url %>
+  # [194, 363]
+  send_Mail:
+    action: core.http
+    next:
+      - do:
+          - end
+    input:
+      url: "https://api.mailjet.com/v3.1/send"
+      body: "{\n    \"Messages\": [\n        {\n            \"From\": {\n                \"Email\": \"afzalbadarudeen.07@gmail.com\",\n                \"Name\": \"Me\"\n            },\n            \"To\": [\n                {\n                    \"Email\": \"afzalbadarudeen.077@gmail.com\",\n                    \"Name\": \"You\"\n                }\n            ],\n            \"Subject\": \"Pdf_Document\",\n            \"TextPart\": \"Kindly, go through the pdf link attached\",\n            \"HTMLPart\": \"<h3>Dear user, Here is the <a href='https://www.mailjet.com/'>link</a></h3><br /><% ctx().pdf_link %>\"\n        }\n    ]\n}\n"
+      method: POST
+      username: f70506171df992fdc3d2c52fcb2aeef4
+      password: 762f36f360556e7d77a1affda0a1c09b
+output:
+  - result_url: <% ctx().d_d %>
+  - link: <% ctx().pdf_link %>

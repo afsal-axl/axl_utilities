@@ -1,0 +1,5 @@
+pack: axl_utilities
+enabled: true
+runner_type: orquesta
+name: send_pdf_tomail
+entry_point: workflows/send_pdf_tomail.yaml
